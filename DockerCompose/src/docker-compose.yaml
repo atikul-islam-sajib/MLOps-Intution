@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  dataloader:
+    build: ./data_loader
+    volumes:
+      - ./data:/data_loader/data
+    container_name: dataloader
+
+  trainer:
+    build: ./trainer
+    volumes:
+      - ./data:/trainer/data
+      - ./models:/trainer/models
+    container_name: trainer
+    depends_on:
+      - dataloader
+
+  tester:
+    build: ./tester
+    volumes:
+      - ./data:/tester/data
+      - ./models:/tester/models
+    container_name: tester
+    depends_on:
+      - trainer
+      - dataloader
