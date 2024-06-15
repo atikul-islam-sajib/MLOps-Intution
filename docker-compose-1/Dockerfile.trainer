@@ -1,0 +1,5 @@
+FROM python:3.9-slim
+WORKDIR /app
+COPY src/trainer.py .
+RUN pip install numpy pandas scikit-learn
+ENTRYPOINT ["python", "trainer.py"]

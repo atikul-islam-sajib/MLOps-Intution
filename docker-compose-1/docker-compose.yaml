@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  data_loader:
+    build:
+      context: .
+      dockerfile: Dockerfile.data_loader
+    volumes:
+      - ./data:/app/data/
+    command: ["sh", "-c", "python data_loader.py && touch /app/data/loaded"]
+
+  trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile.trainer
+    volumes:
+      - ./data:/app/data
+      - ./saved_models:/app/saved_models
+    depends_on:
+      data_loader:
+        condition: service_completed_successfully
+    command: ["sh", "-c", "while [ ! -f /app/data/loaded ]; do sleep 1; done && python trainer.py && touch /app/data/trained"]
+
+  tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.tester
+    volumes:
+      - ./data:/app/data
+      - ./saved_models:/app/saved_models
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+    command: ["sh", "-c", "while [ ! -f /app/data/trained ]; do sleep 1; done && python tester.py && touch /app/data/tested"]
+
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    volumes:
+      - ./data:/app/data
+      - ./saved_models:/app/saved_models
+    depends_on:
+      tester:
+        condition: service_completed_successfully
+    command: ["sh", "-c", "while [ ! -f /app/data/tested ]; do sleep 1; done && python inference.py"]
+
